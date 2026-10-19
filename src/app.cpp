@@ -12,16 +12,18 @@
 // --- App Class ---
 
 // Constructor now accepts pre-initialized SDL_Window* and SDL_Renderer*
-App::App(const std::string& filename, SDL_Window* window, SDL_Renderer* renderer)
+App::App(const std::string& filename, SDL_Window* window, SDL_Renderer* renderer,
+         const std::string& fontPath)
     : m_running(true), m_currentPage(0), m_currentScale(100),
       m_scrollX(0), m_scrollY(0), m_pageWidth(0), m_pageHeight(0),
+      m_cachedPage(-1), m_cachedScale(-1),
       m_isDragging(false), m_lastTouchX(0.0f), m_lastTouchY(0.0f),
       m_gameController(nullptr), m_gameControllerInstanceID(-1) {
 
     // Pass the pre-initialized window and renderer to the Renderer object
     m_renderer = std::make_unique<Renderer>(window, renderer);
 
-    m_textRenderer = std::make_unique<TextRenderer>(m_renderer->getSDLRenderer(), "res/Roboto-Regular.ttf", 16);
+    m_textRenderer = std::make_unique<TextRenderer>(m_renderer->getSDLRenderer(), fontPath, 16);
 
     if (filename.length() >= 4 && filename.substr(filename.length() - 4) == ".pdf") {
         m_document = std::make_unique<PdfDocument>();
@@ -252,16 +254,22 @@ void App::renderCurrentPage() {
     int currentWindowWidth = m_renderer->getWindowWidth();
     int currentWindowHeight = m_renderer->getWindowHeight();
 
-    int renderedWidth, renderedHeight;
-    std::vector<uint8_t> pixelData = m_document->renderPage(m_currentPage, renderedWidth, renderedHeight, m_currentScale);
-
-    m_pageWidth = renderedWidth;
-    m_pageHeight = renderedHeight;
+    // Rasterising is expensive (especially on slow CPUs), so only ask the
+    // document for a new page when the page or the scale has changed.
+    bool pageChanged = m_currentPage != m_cachedPage || m_currentScale != m_cachedScale;
+    if (pageChanged) {
+        int renderedWidth, renderedHeight;
+        m_pagePixels = m_document->renderPage(m_currentPage, renderedWidth, renderedHeight, m_currentScale);
+        m_pageWidth = renderedWidth;
+        m_pageHeight = renderedHeight;
+        m_cachedPage = m_currentPage;
+        m_cachedScale = m_currentScale;
+    }
 
     int posX = (currentWindowWidth - m_pageWidth) / 2 + m_scrollX;
     int posY = (currentWindowHeight - m_pageHeight) / 2 + m_scrollY;
 
-    m_renderer->renderPage(pixelData, renderedWidth, renderedHeight, posX, posY, m_pageWidth, m_pageHeight);
+    m_renderer->renderPage(m_pagePixels, m_pageWidth, m_pageHeight, posX, posY, m_pageWidth, m_pageHeight, pageChanged);
 }
 
 void App::renderUI() {

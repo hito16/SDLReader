@@ -50,9 +50,16 @@ SDL_Renderer* Renderer::getSDLRenderer() const {
     return m_renderer; // Return raw pointer
 }
 
-void Renderer::renderPage(const std::vector<uint8_t>& pixelData, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight) {
+void Renderer::renderPage(const std::vector<uint8_t>& pixelData, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight,
+                          bool contentChanged) {
     if (pixelData.empty() || srcWidth == 0 || srcHeight == 0) {
         std::cerr << "Warning: Attempted to render empty or zero-dimension pixel data." << std::endl;
+        return;
+    }
+
+    if (!contentChanged && m_texture && srcWidth == m_currentTexWidth && srcHeight == m_currentTexHeight) {
+        SDL_Rect destRect = { destX, destY, destWidth, destHeight };
+        SDL_RenderCopy(m_renderer, m_texture.get(), NULL, &destRect);
         return;
     }
 

@@ -41,8 +41,16 @@ INC_PATHS = $(shell pkg-config --cflags SDL2_ttf sdl2)
 # -L$(MUPDF_OPT_PATH)/lib: Manual library path for MuPDF static libs via opt symlink
 # -lmupdf -lmupdf-third: Link against MuPDF's main and third-party libraries
 # pkg-config --libs SDL2_ttf added for explicit SDL_ttf library linking
-LIBS = $(shell pkg-config --libs SDL2_ttf sdl2) \
-       -L$(MUPDF_OPT_PATH)/lib -lmupdf -lmupdf-third
+# Prefer pkg-config's mupdf when available (e.g. Debian/Ubuntu libmupdf-dev,
+# which links system third-party libs and ships no libmupdf-third).
+# Otherwise fall back to the Homebrew static libs.
+ifeq ($(shell pkg-config --exists mupdf && echo yes),yes)
+MUPDF_LIBS = $(shell pkg-config --libs mupdf)
+else
+MUPDF_LIBS = -L$(MUPDF_OPT_PATH)/lib -lmupdf -lmupdf-third
+endif
+
+LIBS = $(shell pkg-config --libs SDL2_ttf sdl2) $(MUPDF_LIBS)
 
 # All object files (will be placed in the build directory)
 # Transforms src/file.cpp into build/file.o and cli/file.cpp into build/file.o

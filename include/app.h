@@ -31,7 +31,8 @@ public:
     };
 
     // Constructor now accepts pre-initialized SDL_Window* and SDL_Renderer*
-    App(const std::string& filename, SDL_Window* window, SDL_Renderer* renderer);
+    App(const std::string& filename, SDL_Window* window, SDL_Renderer* renderer,
+        const std::string& fontPath = "res/Roboto-Regular.ttf");
     ~App();
 
     void run();
@@ -76,6 +77,11 @@ private:
     int m_scrollY;
     int m_pageWidth;
     int m_pageHeight;
+
+    // Last rendered page; re-rendered only when the page or scale changes
+    std::vector<uint8_t> m_pagePixels;
+    int m_cachedPage;
+    int m_cachedScale;
 
     bool m_isDragging;
     float m_lastTouchX;

@@ -24,7 +24,9 @@ public:
 
     SDL_Renderer* getSDLRenderer() const; // This method remains useful
 
-    void renderPage(const std::vector<uint8_t>& pixelData, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight);
+    // contentChanged=false reuses the texture uploaded by the previous call
+    void renderPage(const std::vector<uint8_t>& pixelData, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight,
+                    bool contentChanged = true);
 
     int getWindowWidth() const;
     int getWindowHeight() const;

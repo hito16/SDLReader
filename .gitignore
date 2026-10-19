@@ -1,1 +1,4 @@
 *.o
+build/
+bin/
+ports/wiiu/deps/
